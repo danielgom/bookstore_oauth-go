@@ -99,7 +99,7 @@ func getAccessToken(atId string) (*accessToken, *errors.RestErr) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, errors.NewInternalServerError("Invalid response from user API while trying to get access token")
+		return nil, errors.NewInternalServerError("Invalid response from user API while trying to get the access token")
 	}
 
 	defer func() {
