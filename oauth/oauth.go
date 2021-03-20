@@ -95,7 +95,7 @@ func getAccessToken(atId string) (*accessToken, *errors.RestErr) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://localhost:8080/oauth/accessToken/%s", atId), nil)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://localhost:8080/oauth/accessToken/%s", atId), nil)
 
 	resp, err := client.Do(req)
 	if err != nil {
