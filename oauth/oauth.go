@@ -61,7 +61,7 @@ func GetClientId(req *http.Request) int64 {
 	return clientId
 }
 
-func AuthenticateRequest(req *http.Request) *errors.RestErr {
+func AuthenticateRequest(req *http.Request) errors.RestErr {
 	if req == nil {
 		return nil
 	}
@@ -74,7 +74,7 @@ func AuthenticateRequest(req *http.Request) *errors.RestErr {
 
 	token, err := getAccessToken(at)
 	if err != nil {
-		if err.Status == http.StatusNotFound {
+		if err.Status() == http.StatusNotFound {
 			return nil
 		}
 		return err
@@ -91,7 +91,7 @@ func cleanRequest(req *http.Request) {
 	req.Header.Del(headerXClientId)
 }
 
-func getAccessToken(atId string) (*accessToken, *errors.RestErr) {
+func getAccessToken(atId string) (*accessToken, errors.RestErr) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
@@ -99,7 +99,7 @@ func getAccessToken(atId string) (*accessToken, *errors.RestErr) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, errors.NewInternalServerError("Invalid response from user API while trying to get the access token")
+		return nil, errors.NewInternalServerError("Invalid response from user API while trying to get the access token", err)
 	}
 
 	defer func() {
@@ -111,16 +111,16 @@ func getAccessToken(atId string) (*accessToken, *errors.RestErr) {
 	respBody, _ := io.ReadAll(resp.Body)
 
 	if resp.StatusCode > 399 {
-		restErr := new(errors.RestErr)
-		if err = json.Unmarshal(respBody, restErr); err != nil {
-			return nil, errors.NewInternalServerError("Invalid error interface when trying to get access token")
+		apiErr, err := errors.NewRestErrorFromBytes(respBody)
+		if err != nil {
+			return nil, errors.NewInternalServerError("Invalid error interface when trying to get access token", err)
 		}
-		return nil, restErr
+		return nil, apiErr
 	}
 
 	at := new(accessToken)
 	if err = json.Unmarshal(respBody, at); err != nil {
-		return nil, errors.NewInternalServerError("Error when trying to unmarshal user response")
+		return nil, errors.NewInternalServerError("Error when trying to unmarshal user response", err)
 	}
 
 	return at, nil
